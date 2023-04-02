@@ -1,0 +1,143 @@
+<?php
+?>
+<div class="col-lg-12">
+	<div class="card card-outline card-primary">
+		<div class="card-body">
+			<form action="" id="manage_user">
+				<input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
+				<div class="row">
+					<div class="col-md-6 border-right">
+						<div class="form-group">
+							<label for="" class="control-label">Nama Depan</label>
+							<input type="text" name="firstname" class="form-control form-control-sm" required value="<?php echo isset($firstname) ? $firstname : '' ?>">
+						</div>
+						<div class="form-group">
+							<label for="" class="control-label">Nama Belakang</label>
+							<input type="text" name="lastname" class="form-control form-control-sm" required value="<?php echo isset($lastname) ? $lastname : '' ?>">
+						</div>
+						<?php if ($_SESSION['login_type'] == 1) : ?>
+							<div class="form-group">
+								<label for="" class="control-label">Jabatan</label>
+
+								<select class="form-control form-control-sm select2" name="type" id="type" class="custom-select custom-select-sm">
+									<option> </option>
+									<option value="3" <?php echo isset($type) && $type == 3 ? 'selected' : '' ?>>Karyawan</option>
+									<option value="2" <?php echo isset($type) && $type == 2 ? 'selected' : '' ?>>Manajer</option>
+									<option value="1" <?php echo isset($type) && $type == 1 ? 'selected' : '' ?>>Admin</option>
+								</select>
+
+							</div>
+						<?php else : ?>
+							<input type="hidden" name="type" value="3">
+						<?php endif; ?>
+
+						<div class="form-group">
+							<label for="" class="control-label">Foto</label>
+							<div class="custom-file">
+								<input type="file" class="custom-file-input" id="customFile" name="img" onchange="displayImg(this,$(this))">
+								<label class="custom-file-label" for="customFile">Pilih File</label>
+							</div>
+						</div>
+
+						<div class="form-group d-flex justify-content-center align-items-center">
+							<img src="<?php echo isset($avatar) ? 'assets/uploads/' . $avatar : '' ?>" alt="Foto" id="cimg" class="img-fluid img-thumbnail ">
+						</div>
+					</div>
+					<div class="col-md-6">
+
+						<div class="form-group">
+							<label class="control-label">Email</label>
+							<input type="email" class="form-control form-control-sm" name="email" required value="<?php echo isset($email) ? $email : '' ?>">
+							<small id="#msg"></small>
+						</div>
+						<div class="form-group">
+							<label class="control-label">Password</label>
+							<input type="password" class="form-control form-control-sm" name="password" <?php echo !isset($id) ? "required" : '' ?>>
+							<small><i><?php echo isset($id) ? "Kosongkan Jika Tidak Mengubah Password" : '' ?></i></small>
+						</div>
+						<div class="form-group">
+							<label class="label control-label">Konfirmasi Password</label>
+							<input type="password" class="form-control form-control-sm" name="cpass" <?php echo !isset($id) ? 'required' : '' ?>>
+							<small id="pass_match" data-status=''></small>
+						</div>
+					</div>
+				</div>
+				<hr>
+				<div class="col-lg-12 text-right justify-content-center d-flex">
+					<button class="btn btn-primary mr-2">Simpan</button>
+					<button class="btn btn-secondary" type="button" onclick="location.href = 'index.php?page=daftar_pengguna'">Batal</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+<style>
+	img#cimg {
+		height: 15vh;
+		width: 15vh;
+		object-fit: cover;
+		border-radius: 100% 100%;
+	}
+</style>
+<script>
+	$('[name="password"],[name="cpass"]').keyup(function() {
+		var pass = $('[name="password"]').val()
+		var cpass = $('[name="cpass"]').val()
+		if (cpass == '' || pass == '') {
+			$('#pass_match').attr('data-status', '')
+		} else {
+			if (cpass == pass) {
+				$('#pass_match').attr('data-status', '1').html('<i class="text-success">Password Sesuai</i>')
+			} else {
+				$('#pass_match').attr('data-status', '2').html('<i class="text-danger">Password Tidak Sesuai</i>')
+			}
+		}
+	})
+
+	function displayImg(input, _this) {
+		if (input.files && input.files[0]) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				$('#cimg').attr('src', e.target.result);
+			}
+
+			reader.readAsDataURL(input.files[0]);
+		}
+	}
+	$('#manage_user').submit(function(e) {
+		e.preventDefault()
+		$('input').removeClass("border-danger")
+		start_load()
+		$('#msg').html('')
+		if ($('[name="password"]').val() != '' && $('[name="cpass"]').val() != '') {
+			if ($('#pass_match').attr('data-status') != 1) {
+				if ($("[name='password']").val() != '') {
+					$('[name="password"],[name="cpass"]').addClass("border-danger")
+					end_load()
+					return false;
+				}
+			}
+		}
+		$.ajax({
+			url: 'ajax.php?action=save_user',
+			data: new FormData($(this)[0]),
+			cache: false,
+			contentType: false,
+			processData: false,
+			method: 'POST',
+			type: 'POST',
+			success: function(resp) {
+				if (resp == 1) {
+					alert_toast('Data Tersimpan', "success");
+					setTimeout(function() {
+						location.replace('index.php?page=daftar_pengguna')
+					}, 750)
+				} else if (resp == 2) {
+					$('#msg').html("<div class='alert alert-danger'>Email already exist.</div>");
+					$('[name="email"]').addClass("border-danger")
+					end_load()
+				}
+			}
+		})
+	})
+</script>
